@@ -3,10 +3,15 @@ import nodemailer from 'nodemailer';
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: process.env.GMAIL_USER, // Need to set this in .env
-        pass: process.env.GMAIL_APP_PASSWORD, // 'gxoq bwym sgng gxlv'
+        user: process.env.GMAIL_USER,
+        pass: process.env.GMAIL_APP_PASSWORD,
     },
 });
+
+// 起動時に設定を確認
+if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+    console.warn('WARNING: GMAIL_USER or GMAIL_APP_PASSWORD is not set in environment variables.');
+}
 
 export async function sendEntryEmail(to: string, name: string, isWaitlist: boolean, company: string = '', entryId: number | string = '') {
     const subject = isWaitlist

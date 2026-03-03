@@ -37,13 +37,22 @@ export async function POST(request: Request) {
         const isWaitlist = status === 'waitlist';
 
         // メール送信 (エラーが起きてもエントリー自体は完了させるため try-catch)
+        let mailSent = true;
+        let mailErrorMsg = null;
         try {
             await sendEntryEmail(email, name, isWaitlist, company, result.rows[0].id);
-        } catch (mailError) {
+        } catch (mailError: any) {
+            mailSent = false;
+            mailErrorMsg = mailError.message || 'Unknown mail error';
             console.error('Mail Send Error:', mailError);
         }
 
-        return NextResponse.json({ success: true, entry: result.rows[0] });
+        return NextResponse.json({
+            success: true,
+            entry: result.rows[0],
+            mailSent,
+            mailError: mailErrorMsg
+        });
     } catch (error: any) {
         console.error('API Error:', error);
         return NextResponse.json({
