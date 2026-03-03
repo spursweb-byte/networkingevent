@@ -1,18 +1,30 @@
 import { createClient } from '@vercel/postgres';
 
 /**
- * データベースへの接点（db）を定義します。
- * createClient を使用することで、直接接続（Direct Connection）でも
- * エラーにならずに安定して通信ができるようになります。
+ * データベース接続ヘルパー
+ * 環境変数の名前が POSTGRES_URL でも POSTGRES_URL_NON_POOLING でも、
+ * 見つけた方を優先して使用し、直接接続を確立します。
  */
 export const db = {
   async sql(strings: TemplateStringsArray, ...values: any[]) {
-    const client = createClient();
+    // 優先順位をつけて接続文字列を取得
+    const connectionString =
+      process.env.POSTGRES_URL_NON_POOLING ||
+      process.env.POSTGRES_URL ||
+      process.env.DATABASE_URL;
+
+    if (!connectionString) {
+      throw new Error('DATABASE_CONNECTION_ERROR: 接続文字列(POSTGRES_URL)が見つかりません。Vercelの設定を確認してください。');
+    }
+
+    const client = createClient({
+      connectionString: connectionString
+    });
+
     await client.connect();
     try {
       return await client.sql(strings, ...values);
     } finally {
-      // 通信が終わったら確実に切断します
       await client.end();
     }
   }
