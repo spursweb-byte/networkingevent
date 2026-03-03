@@ -17,6 +17,21 @@ export async function POST(request: Request) {
             memo = ''
         } = body;
 
+        // 会社名の重複チェック (キャンセル以外)
+        const duplicateCheck = await db.sql`
+            SELECT id FROM entries 
+            WHERE company = ${company} AND status != 'cancelled'
+            LIMIT 1
+        `;
+
+        if (duplicateCheck.rows.length > 0) {
+            return NextResponse.json({
+                success: false,
+                error: 'DUPLICATE_COMPANY',
+                message: 'エントリーをすでに同じ会社の別営業さんが申し込んでいます。'
+            }, { status: 400 });
+        }
+
         // 定員チェック (status = 'active' の人数)
         const activeCountResult = await db.sql`
       SELECT COUNT(*) as count FROM entries WHERE status = 'active' OR status = 'checked-in'

@@ -40,7 +40,7 @@ export default function EntryForm() {
                 }
             } else {
                 setStatus('error');
-                setErrorMessage(result.error || '送信中にエラーが発生しました。');
+                setErrorMessage(result.message || result.error || '送信中にエラーが発生しました。');
             }
         } catch (err: any) {
             setStatus('error');
