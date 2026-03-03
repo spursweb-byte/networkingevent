@@ -1,4 +1,4 @@
-import { sql } from '@vercel/postgres';
+import { db } from '@/lib/db';
 import { NextResponse } from 'next/server';
 import { sendPromotionEmail } from '@/lib/mail';
 
@@ -8,17 +8,17 @@ export async function POST(request: Request) {
         const { id, status } = body;
 
         // 現在のステータスを取得
-        const currentEntryResult = await sql`SELECT status FROM entries WHERE id = ${id}`;
+        const currentEntryResult = await db.sql`SELECT status FROM entries WHERE id = ${id}`;
         const oldStatus = currentEntryResult.rows[0]?.status;
 
         // ステータス更新
-        await sql`
+        await db.sql`
       UPDATE entries SET status = ${status} WHERE id = ${id}
     `;
 
         // もし「参加」から「キャンセル」になった場合、キャンセル待ちの繰り上げを確認
         if ((oldStatus === 'active' || oldStatus === 'checked-in') && status === 'cancelled') {
-            const waitlistResult = await sql`
+            const waitlistResult = await db.sql`
         SELECT * FROM entries 
         WHERE status = 'waitlist' 
         ORDER BY created_at ASC 
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
                 const nextUser = waitlistResult.rows[0];
 
                 // 繰り上げ更新
-                await sql`
+                await db.sql`
           UPDATE entries SET status = 'active' WHERE id = ${nextUser.id}
         `;
 

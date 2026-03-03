@@ -1,7 +1,10 @@
-import { sql } from '@vercel/postgres';
+import { createPool } from '@vercel/postgres';
+
+// 接続文字列が直接接続用か共有接続用かを問わず、いい感じに処理してくれるPoolを作成します
+const pool = createPool();
 
 export async function createTable() {
-    await sql`
+  await pool.sql`
     CREATE TABLE IF NOT EXISTS entries (
       id SERIAL PRIMARY KEY,
       name TEXT NOT NULL,
@@ -16,3 +19,5 @@ export async function createTable() {
     );
   `;
 }
+
+export { pool as db };

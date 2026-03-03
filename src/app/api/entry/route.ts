@@ -1,4 +1,4 @@
-import { sql } from '@vercel/postgres';
+import { db } from '@/lib/db';
 import { NextResponse } from 'next/server';
 import { sendEntryEmail } from '@/lib/mail';
 import { createTable } from '@/lib/db';
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
         } = body;
 
         // 定員チェック (status = 'active' の人数)
-        const activeCountResult = await sql`
+        const activeCountResult = await db.sql`
       SELECT COUNT(*) as count FROM entries WHERE status = 'active' OR status = 'checked-in'
     `;
         const activeCount = parseInt(activeCountResult.rows[0].count || '0');
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
             status = 'waitlist';
         }
 
-        const result = await sql`
+        const result = await db.sql`
       INSERT INTO entries (name, katakana, company, email, newsletter_email, status, type, memo)
       VALUES (${name}, ${katakana}, ${company}, ${email}, ${newsletterEmail}, ${status}, ${type}, ${memo})
       RETURNING *
@@ -55,7 +55,7 @@ export async function POST(request: Request) {
 
 export async function GET() {
     try {
-        const result = await sql`SELECT * FROM entries ORDER BY created_at DESC`;
+        const result = await db.sql`SELECT * FROM entries ORDER BY created_at DESC`;
         return NextResponse.json(result.rows);
     } catch (error: any) {
         return NextResponse.json({ error: error.message }, { status: 500 });
